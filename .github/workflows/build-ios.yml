@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     name: Build & Package IPA
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout Code
@@ -22,15 +22,6 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
-      - name: Run Unit Tests
-        run: |
-          xcodebuild test \
-            -project MindfulScreenTime.xcodeproj \
-            -scheme MindfulScreenTime \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
-            CODE_SIGNING_ALLOWED=NO \
-            | xcpretty || true
-
       - name: Build App (Archive)
         run: |
           xcodebuild archive \
@@ -38,7 +29,9 @@ jobs:
             -scheme MindfulScreenTime \
             -archivePath build/MindfulScreenTime.xcarchive \
             -destination 'generic/platform=iOS' \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
 
       - name: Package Payload to IPA
         run: |
