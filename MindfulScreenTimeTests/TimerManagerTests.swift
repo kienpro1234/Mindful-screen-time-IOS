@@ -3,13 +3,20 @@ import XCTest
 
 final class TimerManagerTests: XCTestCase {
     var timerManager: TimerManager!
+    let testSuite = "test.mindful.timer"
 
     override func setUp() {
         super.setUp()
-        timerManager = TimerManager()
+        if let defaults = UserDefaults(suiteName: testSuite) {
+            defaults.removePersistentDomain(forName: testSuite)
+        }
+        timerManager = TimerManager(suiteName: testSuite)
     }
 
     override func tearDown() {
+        if let defaults = UserDefaults(suiteName: testSuite) {
+            defaults.removePersistentDomain(forName: testSuite)
+        }
         timerManager = nil
         super.tearDown()
     }
@@ -37,11 +44,34 @@ final class TimerManagerTests: XCTestCase {
     }
 
     func testNotificationContentCopy() {
-        // Spec requirements verbatim:
-        // Title: "Dừng Lại Một Chút"
-        // Body: "Bạn đã lướt được 15 phút rồi. Hãy dừng lại hít thở."
         let content = timerManager.makeNotificationContent(appName: "TikTok", inMinutes: 15)
         XCTAssertEqual(content.title, "Dừng Lại Một Chút")
         XCTAssertEqual(content.body, "Bạn đã lướt được 15 phút rồi. Hãy dừng lại hít thở.")
+    }
+
+    func testActiveSessionPersistsAcrossInstances() {
+        timerManager.scheduleMindfulPause(appName: "Facebook", inMinutes: 15.0)
+
+        let secondInstance = TimerManager(suiteName: testSuite)
+        XCTAssertTrue(secondInstance.isSessionUnlocked(for: "Facebook"))
+        XCTAssertNotNil(secondInstance.remainingSeconds(for: "Facebook"))
+    }
+
+    func testIsSessionUnlockedCaseInsensitive() {
+        timerManager.scheduleMindfulPause(appName: "Facebook", inMinutes: 15.0)
+
+        XCTAssertTrue(timerManager.isSessionUnlocked(for: "facebook"))
+        XCTAssertTrue(timerManager.isSessionUnlocked(for: "  FACEBOOK  "))
+        XCTAssertFalse(timerManager.isSessionUnlocked(for: "TikTok"))
+    }
+
+    func testPendingInterceptAppSetAndConsume() {
+        XCTAssertNil(timerManager.consumePendingInterceptApp())
+
+        timerManager.setPendingInterceptApp("Facebook")
+        let secondInstance = TimerManager(suiteName: testSuite)
+
+        XCTAssertEqual(secondInstance.consumePendingInterceptApp(), "Facebook")
+        XCTAssertNil(secondInstance.consumePendingInterceptApp())
     }
 }

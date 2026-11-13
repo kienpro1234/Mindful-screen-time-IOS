@@ -84,15 +84,18 @@ Bạn có thể dùng **Sideloadly** hoặc **AltStore** (cả hai đều chạy
 
 ## ⚡ Cài đặt Tự động hóa (Shortcuts Automation) trên iPhone
 
-Chỉ cần làm một lần trong 60 giây để kích hoạt tính năng can thiệp tự động:
+Chỉ cần làm trong 60 giây — **không mở qua Safari, tự động quay lại ứng dụng khi bạn chọn dùng tiếp**:
 
 1. Mở app **Phím tắt (Shortcuts)** trên iPhone -> Chọn tab **Tự động hóa (Automation)** ở dưới cùng.
 2. Bấm dấu **(+)** ở góc trên -> Chọn **Ứng dụng (App)**.
-3. Cấu hình:
-   - Ứng dụng: Chọn các app giải trí bạn muốn quản lý (vd: TikTok, Facebook, YouTube, Instagram).
+3. Cấu hình (nên tạo riêng từng Tự động hóa cho mỗi app, vd: 1 cho Facebook, 1 cho TikTok):
+   - Ứng dụng: Chọn **1 app** bạn muốn quản lý (vd: Facebook).
    - Đánh dấu chọn: **Được mở (Is Opened)**.
    - Chọn: **Chạy ngay lập tức (Run Immediately)** và tắt mục *Thông báo khi chạy*.
-4. Bấm **Tiếp**, chọn **Tự động hóa trống mới** -> Thêm tác vụ **Mở URL**.
-5. Nhập URL: `mindful://intercept?app=TikTok` (hoặc tên app tương ứng) -> Bấm **Xong**.
+4. Bấm **Tiếp**, chọn **Tự động hóa trống mới**, thêm 2 tác vụ theo thứ tự:
+   - Tìm **Mindful** -> Chọn **Kiểm tra tỉnh thức** -> Chọn đúng tên app (vd: **Facebook**).
+   - Tìm **Nếu (If)** -> Giữ nguyên điều kiện *Nếu Kiểm tra tỉnh thức là Có*.
+   - Tìm **Mở ứng dụng (Open App)** -> Chọn **Mindful** và đặt khối này vào bên trong nhánh **Nếu**.
+5. Bấm mũi tên **(<)** / **Xong** để lưu lại.
 
-Bây giờ, mỗi khi bạn chạm vào app giải trí, màn hình **Khoảng lặng tỉnh thức** sẽ xuất hiện tức thì để nhắc nhở và bảo vệ sự tập trung của bạn!
+Bây giờ, mỗi khi bạn chạm mở Facebook, màn hình **Khoảng lặng tỉnh thức** sẽ mở thẳng trực tiếp (không qua Safari). Nếu bạn chọn *"Tôi vẫn cần mở"*, ứng dụng sẽ tự mở lại Facebook cho bạn dùng trong 15 phút mà không bị lặp!

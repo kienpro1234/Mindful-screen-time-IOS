@@ -22,6 +22,24 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>fb</string>
+		<string>snssdk1233</string>
+		<string>tiktok</string>
+		<string>youtube</string>
+		<string>vnd.youtube</string>
+		<string>instagram</string>
+		<string>zalo</string>
+		<string>fb-messenger</string>
+		<string>barcelona</string>
+		<string>tg</string>
+		<string>reddit</string>
+		<string>twitter</string>
+		<string>capcut</string>
+		<string>shopeevn</string>
+		<string>nflx</string>
+	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

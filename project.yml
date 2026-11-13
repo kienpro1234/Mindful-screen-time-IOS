@@ -36,3 +36,15 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mindful.screentime.tests
         SWIFT_VERSION: "5.9"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/MindfulScreenTime.app/MindfulScreenTime"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+schemes:
+  MindfulScreenTime:
+    build:
+      targets:
+        MindfulScreenTime: all
+        MindfulScreenTimeTests: [test]
+    test:
+      targets:
+        - MindfulScreenTimeTests

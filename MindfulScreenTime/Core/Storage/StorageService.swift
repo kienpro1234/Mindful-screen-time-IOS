@@ -31,6 +31,7 @@ public final class StorageService: StorageServiceProtocol {
         )
         current.append(newRecord)
         saveSessions(current)
+        NotificationCenter.default.post(name: NSNotification.Name("MindfulSessionLogged"), object: nil)
     }
 
     public func fetchAllSessions() -> [SessionRecord] {

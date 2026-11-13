@@ -10,58 +10,52 @@ public struct ShortcutGuideView: View {
                     Text("Cài Đặt Tự Động Hóa")
                         .font(.title2.weight(.bold))
                         .foregroundColor(.white)
-                    Text("Kích hoạt tính năng can thiệp tự động khi mở ứng dụng giải trí chỉ trong 3 bước")
+                    Text("Kết nối trực tiếp với iOS Shortcuts — không qua Safari, tự động quay lại app khi bạn đồng ý mở.")
                         .font(.subheadline)
                         .foregroundColor(.white.opacity(0.7))
                 }
 
-                // Step 1
                 guideStepCard(
                     stepNumber: 1,
                     icon: "app.badge.checkmark",
-                    title: "Mở ứng dụng Phím tắt (Shortcuts)",
-                    description: "Trên iPhone, mở app **Phím tắt** có sẵn của Apple -> Chọn tab **Tự động hóa (Automation)** ở thanh dưới cùng -> Bấm dấu **(+)** để tạo mới."
+                    title: "Tạo Tự Động Hóa Cho Từng App",
+                    description: "Mở app **Phím tắt (Shortcuts)** -> Tab **Tự động hóa** -> Dấu **(+)** -> Chọn **Ứng dụng** -> Chọn **1 app** (vd: Facebook) -> Tích **Được mở** -> Chọn **Chạy ngay lập tức** -> Bấm **Tiếp**."
                 )
 
-                // Step 2
                 guideStepCard(
                     stepNumber: 2,
-                    icon: "slider.horizontal.3",
-                    title: "Chọn điều kiện: Khi Mở Ứng Dụng",
-                    description: "Chọn mục **Ứng dụng (App)** -> Đánh dấu **Được mở (Is Opened)** -> Chọn các app bạn muốn quản lý (vd: TikTok, Facebook, YouTube) -> Chọn **Chạy ngay lập tức (Run Immediately)**."
+                    icon: "checkmark.shield",
+                    title: "Bước 1 trong tác vụ: Kiểm tra tỉnh thức",
+                    description: "Chọn **Tự động hóa trống mới** -> Thanh tìm kiếm gõ **Mindful** -> Chọn tác vụ **Kiểm tra tỉnh thức** -> Chạm vào tên app để chọn đúng app tương ứng (vd: **Facebook**)."
                 )
 
-                // Step 3
                 guideStepCard(
                     stepNumber: 3,
-                    icon: "link.circle.fill",
-                    title: "Thêm tác vụ Mở URL",
-                    description: "Bấm **Tự động hóa trống mới** -> Thêm tác vụ **Mở URL** -> Dán đường dẫn sau:\n\n`mindful://intercept?app=TikTok`\n\n(Thay TikTok bằng tên ứng dụng tương ứng)."
+                    icon: "arrow.triangle.branch",
+                    title: "Bước 2 trong tác vụ: Nếu Cần -> Mở Mindful",
+                    description: "Tìm và thêm tác vụ **Nếu (If)** (sẽ tự hiện: *Nếu Kiểm tra tỉnh thức là Có*). Sau đó tìm tác vụ **Mở ứng dụng (Open App)** -> Chọn **Mindful** và kéo khối **Mở ứng dụng** đặt vào giữa **Nếu** và **Ngược lại**."
                 )
 
-                // Test URL helper button
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("URL mẫu để copy:")
+                    Text("Cấu trúc chuẩn trong Phím tắt:")
                         .font(.caption.weight(.semibold))
                         .foregroundColor(.cyan)
 
-                    HStack {
-                        Text("mindful://intercept?app=TikTok")
-                            .font(.system(.footnote, design: .monospaced))
-                            .foregroundColor(.white)
-                        Spacer()
-                        Button(action: {
-                            UIPasteboard.general.string = "mindful://intercept?app=TikTok"
-                        }) {
-                            Image(systemName: "doc.on.doc.fill")
-                                .foregroundColor(.cyan)
-                        }
-                    }
-                    .padding(12)
+                    Text("""
+                    1. Kiểm tra Facebook
+                    2. Nếu [Kiểm tra Facebook] là Có
+                           Mở ứng dụng [Mindful]
+                       Ngược lại
+                       Kết thúc Nếu
+                    """)
+                    .font(.system(.footnote, design: .monospaced))
+                    .foregroundColor(.white)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.white.opacity(0.08))
-                    .cornerRadius(10)
+                    .cornerRadius(12)
                 }
-                .padding(.top, 8)
+                .padding(.top, 4)
             }
             .padding(20)
             .padding(.bottom, 32)

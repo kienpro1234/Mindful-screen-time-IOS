@@ -22,6 +22,18 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
+      - name: Run Unit Tests
+        run: |
+          SIM_ID=$(xcrun simctl list devices available iPhone | grep -E -o "[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}" | head -n 1)
+          echo "Using Simulator ID: $SIM_ID"
+          xcodebuild test \
+            -project MindfulScreenTime.xcodeproj \
+            -scheme MindfulScreenTime \
+            -destination "platform=iOS Simulator,id=$SIM_ID" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
       - name: Build App (Archive)
         run: |
           xcodebuild archive \

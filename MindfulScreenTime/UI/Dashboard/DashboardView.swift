@@ -30,6 +30,14 @@ public struct DashboardView: View {
                             Text("Vui lòng bật thông báo trong Cài đặt iPhone để nhận nhắc nhở tạm dừng hít thở sau 15 phút.")
                                 .font(.caption)
                                 .foregroundColor(.white.opacity(0.8))
+                            Button("Mở Cài đặt") {
+                                if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                                    UIApplication.shared.open(settingsURL)
+                                }
+                            }
+                            .font(.caption.weight(.bold))
+                            .foregroundColor(.orange)
+                            .padding(.top, 2)
                         }
 
                         Spacer()
@@ -128,6 +136,9 @@ public struct DashboardView: View {
         }
         .background(Color(red: 0.05, green: 0.06, blue: 0.09).ignoresSafeArea())
         .onAppear {
+            refreshData()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("MindfulSessionLogged"))) { _ in
             refreshData()
         }
         .fullScreenCover(isPresented: $isShowingDemoIntervention) {

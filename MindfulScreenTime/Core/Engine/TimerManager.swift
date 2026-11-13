@@ -6,11 +6,21 @@ public final class TimerManager: NSObject, ObservableObject, UNUserNotificationC
 
     @Published public var isNotificationAuthorized: Bool = true
 
-    private var activeSessions: [String: Date] = [:] // appName -> targetEndTime
     private let notificationCenter: UNUserNotificationCenter
+    private let userDefaults: UserDefaults
+    private let sessionsKey = "mindful_active_sessions_v1"
+    private let pendingInterceptKey = "mindful_pending_intercept_app_v1"
 
-    public init(notificationCenter: UNUserNotificationCenter = .current()) {
+    public init(
+        notificationCenter: UNUserNotificationCenter = .current(),
+        suiteName: String? = nil
+    ) {
         self.notificationCenter = notificationCenter
+        if let suite = suiteName, let customDefaults = UserDefaults(suiteName: suite) {
+            self.userDefaults = customDefaults
+        } else {
+            self.userDefaults = UserDefaults.standard
+        }
         super.init()
         self.notificationCenter.delegate = self
         registerNotificationCategories()
@@ -35,14 +45,18 @@ public final class TimerManager: NSObject, ObservableObject, UNUserNotificationC
     }
 
     public func scheduleMindfulPause(appName: String, inMinutes: Double) {
+        let key = normalizedKey(for: appName)
         let durationSeconds = inMinutes * 60.0
         let targetEndTime = Date().addingTimeInterval(durationSeconds)
-        activeSessions[appName] = targetEndTime
+
+        var sessions = loadActiveSessions()
+        sessions[key] = targetEndTime
+        saveActiveSessions(sessions)
 
         let content = makeNotificationContent(appName: appName, inMinutes: Int(inMinutes))
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: durationSeconds, repeats: false)
         let request = UNNotificationRequest(
-            identifier: "mindful.pause.\(appName)",
+            identifier: "mindful.pause.\(key)",
             content: content,
             trigger: trigger
         )
@@ -51,14 +65,46 @@ public final class TimerManager: NSObject, ObservableObject, UNUserNotificationC
     }
 
     public func cancelActiveTimer(for appName: String) {
-        activeSessions.removeValue(forKey: appName)
-        notificationCenter.removePendingNotificationRequests(withIdentifiers: ["mindful.pause.\(appName)"])
+        let key = normalizedKey(for: appName)
+        var sessions = loadActiveSessions()
+        sessions.removeValue(forKey: key)
+        saveActiveSessions(sessions)
+
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: ["mindful.pause.\(key)"])
     }
 
     public func remainingSeconds(for appName: String) -> Double? {
-        guard let endTime = activeSessions[appName] else { return nil }
+        let key = normalizedKey(for: appName)
+        var sessions = loadActiveSessions()
+        guard let endTime = sessions[key] else { return nil }
         let diff = endTime.timeIntervalSince(Date())
-        return diff > 0 ? diff : nil
+        if diff > 0 {
+            return diff
+        } else {
+            sessions.removeValue(forKey: key)
+            saveActiveSessions(sessions)
+            return nil
+        }
+    }
+
+    public func isSessionUnlocked(for appName: String) -> Bool {
+        if let remaining = remainingSeconds(for: appName), remaining > 0 {
+            return true
+        }
+        return false
+    }
+
+    public func setPendingInterceptApp(_ appName: String) {
+        let cleaned = appName.trimmingCharacters(in: .whitespacesAndNewlines)
+        userDefaults.set(cleaned.isEmpty ? DeepLinkHandler.defaultAppName : cleaned, forKey: pendingInterceptKey)
+    }
+
+    public func consumePendingInterceptApp() -> String? {
+        guard let value = userDefaults.string(forKey: pendingInterceptKey), !value.isEmpty else {
+            return nil
+        }
+        userDefaults.removeObject(forKey: pendingInterceptKey)
+        return value
     }
 
     public func makeNotificationContent(appName: String, inMinutes: Int) -> UNMutableNotificationContent {
@@ -69,6 +115,21 @@ public final class TimerManager: NSObject, ObservableObject, UNUserNotificationC
         content.categoryIdentifier = "MINDFUL_PAUSE_CATEGORY"
         content.userInfo = ["appName": appName]
         return content
+    }
+
+    private func normalizedKey(for appName: String) -> String {
+        return appName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private func loadActiveSessions() -> [String: Date] {
+        guard let data = userDefaults.data(forKey: sessionsKey) else { return [:] }
+        return (try? JSONDecoder().decode([String: Date].self, from: data)) ?? [:]
+    }
+
+    private func saveActiveSessions(_ sessions: [String: Date]) {
+        if let data = try? JSONEncoder().encode(sessions) {
+            userDefaults.set(data, forKey: sessionsKey)
+        }
     }
 
     private func registerNotificationCategories() {
@@ -112,7 +173,6 @@ public final class TimerManager: NSObject, ObservableObject, UNUserNotificationC
             StorageService.shared.logSession(appName: appName, outcome: .exitedToWork, durationMinutes: 15)
             cancelActiveTimer(for: appName)
         } else if response.actionIdentifier == "MINDFUL_ACTION_EXTEND" {
-            // Re-intercept to trigger escalating friction
             DispatchQueue.main.async {
                 NotificationCenter.default.post(
                     name: NSNotification.Name("MindfulTriggerIntervention"),
