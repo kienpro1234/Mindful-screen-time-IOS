@@ -39,6 +39,7 @@
 		<string>capcut</string>
 		<string>shopeevn</string>
 		<string>nflx</string>
+		<string>shortcuts</string>
 	</array>
 	<key>CFBundleURLTypes</key>
 	<array>

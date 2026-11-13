@@ -87,6 +87,61 @@ public final class TimerManager: NSObject, ObservableObject, UNUserNotificationC
         }
     }
 
+    public static let multiAppSentinel = "__MINDFUL_MULTI_APP__"
+
+    public enum InterceptionDecision: Equatable {
+        case bypass
+        case intercept(targetDisplayName: String)
+    }
+
+    private var launchPassKey: String { "mindful_launch_pass_until_v1" }
+
+    public func grantLaunchPass(duration: TimeInterval = 6.0, now: Date = Date()) {
+        userDefaults.set(now.addingTimeInterval(duration).timeIntervalSince1970, forKey: launchPassKey)
+    }
+
+    public func hasActiveLaunchPass(now: Date = Date()) -> Bool {
+        let expiryTimestamp = userDefaults.double(forKey: launchPassKey)
+        guard expiryTimestamp > 0 else { return false }
+        if now.timeIntervalSince1970 < expiryTimestamp {
+            return true
+        }
+        userDefaults.removeObject(forKey: launchPassKey)
+        return false
+    }
+
+    public func clearLaunchPass() {
+        userDefaults.removeObject(forKey: launchPassKey)
+    }
+
+    /// Evaluates whether opening an app should bypass silently or present the mindful pause sheet.
+    public func evaluateInterception(
+        forAppName requestedApp: String?,
+        managedApps: ManagedAppsStore = .shared,
+        now: Date = Date()
+    ) -> InterceptionDecision {
+        if hasActiveLaunchPass(now: now) {
+            return .bypass
+        }
+
+        let cleaned = requestedApp?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let specific = cleaned, !specific.isEmpty, specific != Self.multiAppSentinel {
+            if isSessionUnlocked(for: specific) {
+                return .bypass
+            }
+            return .intercept(targetDisplayName: specific)
+        }
+
+        if let uniqueApp = managedApps.singleSelectedAppNameIfUnique() {
+            if isSessionUnlocked(for: uniqueApp) {
+                return .bypass
+            }
+            return .intercept(targetDisplayName: uniqueApp)
+        }
+
+        return .intercept(targetDisplayName: Self.multiAppSentinel)
+    }
+
     public func isSessionUnlocked(for appName: String) -> Bool {
         if let remaining = remainingSeconds(for: appName), remaining > 0 {
             return true

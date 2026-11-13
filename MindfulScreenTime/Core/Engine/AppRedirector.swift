@@ -83,4 +83,18 @@ public final class AppRedirector {
             }
         }
     }
+
+    /// Opens Apple's Shortcuts app directly at the automation creation flow, falling back to Shortcuts home.
+    public static func openShortcutsAutomationCreator() {
+        DispatchQueue.main.async {
+            if let createURL = URL(string: "shortcuts://create-automation"),
+               UIApplication.shared.canOpenURL(createURL) {
+                UIApplication.shared.open(createURL)
+                return
+            }
+            if let fallbackURL = URL(string: "shortcuts://") {
+                UIApplication.shared.open(fallbackURL)
+            }
+        }
+    }
 }

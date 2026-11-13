@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 
 @main
@@ -8,6 +9,9 @@ struct MindfulScreenTimeApp: App {
 
     init() {
         TimerManager.shared.requestNotificationPermission { _ in }
+        if #available(iOS 26.0, *) {
+            MindfulAppShortcuts.updateAppShortcutParameters()
+        }
     }
 
     var body: some Scene {

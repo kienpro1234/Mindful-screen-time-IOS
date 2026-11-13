@@ -57,8 +57,8 @@ public enum TargetAppOption: String, AppEnum, CaseIterable {
 }
 
 public struct CheckMindfulIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Kiểm tra tỉnh thức"
-    public static var description = IntentDescription("Kiểm tra xem có cần hiển thị Khoảng lặng tỉnh thức trước khi mở ứng dụng hay không.")
+    public static var title: LocalizedStringResource = "Kiểm tra tỉnh thức (Dự phòng 2 bước)"
+    public static var description = IntentDescription("Trả về Có/Không để dùng với khối Nếu + Mở ứng dụng trên iOS cũ hoặc khi muốn dùng luồng dự phòng.")
     public static var openAppWhenRun: Bool = false
 
     @Parameter(title: "Ứng dụng", default: .facebook)
@@ -72,11 +72,13 @@ public struct CheckMindfulIntent: AppIntent {
 
     @MainActor
     public func perform() async throws -> some IntentResult & ReturnsValue<Bool> {
-        let appName = targetApp.displayName
-        if TimerManager.shared.isSessionUnlocked(for: appName) {
+        let decision = TimerManager.shared.evaluateInterception(forAppName: targetApp.displayName)
+        switch decision {
+        case .bypass:
             return .result(value: false)
+        case .intercept(let targetDisplayName):
+            TimerManager.shared.setPendingInterceptApp(targetDisplayName)
+            return .result(value: true)
         }
-        TimerManager.shared.setPendingInterceptApp(appName)
-        return .result(value: true)
     }
 }

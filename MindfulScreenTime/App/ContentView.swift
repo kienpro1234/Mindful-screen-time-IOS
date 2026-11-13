@@ -19,12 +19,21 @@ public struct ContentView: View {
             }
 
             NavigationStack {
-                ShortcutGuideView()
-                    .navigationTitle("Tự Động Hóa")
+                ManagedAppsView()
+                    .navigationTitle("Quản Lý App")
                     .navigationBarTitleDisplayMode(.inline)
             }
             .tabItem {
-                Label("Cài Đặt", systemImage: "gearshape.fill")
+                Label("Chọn App", systemImage: "checklist.checked")
+            }
+
+            NavigationStack {
+                ShortcutGuideView()
+                    .navigationTitle("Phím Tắt")
+                    .navigationBarTitleDisplayMode(.inline)
+            }
+            .tabItem {
+                Label("Hướng Dẫn", systemImage: "book.closed.fill")
             }
         }
         .accentColor(.cyan)

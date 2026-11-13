@@ -96,7 +96,7 @@ public struct PreOpenFrictionView: View {
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
 
-                Text("Bạn có chắc sẽ dùng \(appName), nó có thể lấy đi sự tập trung và lãng phí thời gian.")
+                Text("Bạn có chắc sẽ dùng \(displayAppName), nó có thể lấy đi sự tập trung và lãng phí thời gian.")
                     .font(.body)
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white.opacity(0.85))
@@ -150,17 +150,21 @@ public struct PreOpenFrictionView: View {
                 .foregroundColor(.white.opacity(0.75))
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(AppRedirector.knownTargets.prefix(6)) { target in
+                ForEach(fallbackTargets) { target in
                     Button(action: {
-                        onProceedToApp()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                            AppRedirector.openTarget(target)
-                        }
+                        launchTargetApp(target)
                     }) {
                         HStack {
                             Image(systemName: target.systemIconName)
-                            Text(target.displayName)
-                                .font(.subheadline.weight(.semibold))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(target.displayName)
+                                    .font(.subheadline.weight(.semibold))
+                                if timerManager.isSessionUnlocked(for: target.displayName) {
+                                    Text("Đang mở khóa")
+                                        .font(.caption2)
+                                        .foregroundColor(.teal)
+                                }
+                            }
                         }
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -183,13 +187,31 @@ public struct PreOpenFrictionView: View {
         }
     }
 
+    private var isMultiAppMode: Bool {
+        appName == TimerManager.multiAppSentinel
+    }
+
+    private var displayAppName: String {
+        isMultiAppMode ? "ứng dụng giải trí" : appName
+    }
+
+    private var effectiveKey: String {
+        isMultiAppMode ? "Ứng dụng giải trí" : appName
+    }
+
+    private var fallbackTargets: [AppLaunchTarget] {
+        let configured = ManagedAppsStore.shared.selectedTargets()
+            .compactMap { ManagedAppsStore.shared.launchTarget(for: $0.name) }
+        return configured.isEmpty ? Array(AppRedirector.knownTargets.prefix(6)) : configured
+    }
+
     private func handleExitToWork() {
-        storageService.logSession(appName: appName, outcome: .exitedToWork, durationMinutes: 0)
+        storageService.logSession(appName: effectiveKey, outcome: .exitedToWork, durationMinutes: 0)
         onExitToWork()
     }
 
     private func handleRequestOpen() {
-        let tier = frictionManager.currentTier(for: appName)
+        let tier = frictionManager.currentTier(for: effectiveKey)
         switch tier {
         case .quickTap:
             unlockAndProceed()
@@ -201,17 +223,36 @@ public struct PreOpenFrictionView: View {
     }
 
     private func unlockAndProceed() {
-        _ = frictionManager.requestExtension(for: appName)
+        _ = frictionManager.requestExtension(for: effectiveKey)
+
+        if isMultiAppMode {
+            isShowingFallbackLauncher = true
+            return
+        }
+
         storageService.logSession(appName: appName, outcome: .openedApp, durationMinutes: 15)
         timerManager.scheduleMindfulPause(appName: appName, inMinutes: 15)
 
-        if AppRedirector.canRedirectDirectly(appName: appName) {
+        if let target = ManagedAppsStore.shared.launchTarget(for: appName) {
+            timerManager.grantLaunchPass(duration: 6.0)
             onProceedToApp()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                AppRedirector.openApp(named: appName)
+                AppRedirector.openTarget(target)
             }
         } else {
             isShowingFallbackLauncher = true
+        }
+    }
+
+    private func launchTargetApp(_ target: AppLaunchTarget) {
+        if isMultiAppMode {
+            storageService.logSession(appName: target.displayName, outcome: .openedApp, durationMinutes: 15)
+            timerManager.scheduleMindfulPause(appName: target.displayName, inMinutes: 15)
+        }
+        timerManager.grantLaunchPass(duration: 6.0)
+        onProceedToApp()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            AppRedirector.openTarget(target)
         }
     }
 }
